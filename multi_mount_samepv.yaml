@@ -1,0 +1,60 @@
+# This example demonstrates the ability for a workflow to attach 
+# to a pre-created, existing volume for use throughout a workflow.
+# A PVC named 'my-existing-volume' is assumed to exist. Create it
+# using `kubectl create -f examples/testvolume.yaml`.
+# 
+# The first step will append the current timestamp to an access log. 
+# The second step will dump the contents of the access log. Submit
+# this workflow multiple times to see the access log grow after each
+# submission.
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: volumes-existing-
+spec:
+  entrypoint: volumes-existing-example
+  volumes:
+  - name: workdir
+    persistentVolumeClaim:
+      claimName: argo-pv-claim
+
+  templates:
+  - name: volumes-existing-example
+    steps:
+    - - name: generate
+        template: append-to-volume
+    - - name: print
+        template: print-accesslog
+      - name: print2
+        template: print-bis
+      - name: print3
+        template: print-bis
+      - name: print4
+        template: print-bis 
+
+  - name: append-to-volume
+    container:
+      image: alpine:latest
+      command: [sh, -c]
+      args: ["echo heads | tee -a /mnt/vol/heads; echo tails | tee -a /mnt/vol/tails"]
+      volumeMounts:
+      - name: workdir
+        mountPath: /mnt/vol
+
+  - name: print-accesslog
+    container:
+      image: alpine:latest
+      command: [sh, -c]
+      args: ["echo 'Volume log:'; ls /mnt/vol"]
+      volumeMounts:
+      - name: workdir
+        mountPath: /mnt/vol
+
+  - name: print-bis
+    container:
+      image: alpine:latest
+      command: [sh, -c]
+      args: ["echo 'Volume log:'; ls /mnt/vol; sleep 101"]
+      volumeMounts:
+      - name: workdir
+        mountPath: /mnt/vol
