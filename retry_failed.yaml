@@ -9,11 +9,11 @@ spec:
   - name: retry-backoff
     retryStrategy:
       limit: 10
-      retryOn: "Always"
+      retryPolicy: "Always"
       backoff:
         duration: "1m"         # Default unit is seconds. Could also be a Duration, e.g.: "2m", "6h", "1d"
         factor: 2
-        maxDuration: "1m"   # Default unit is seconds. Could also be a Duration, e.g.: "2m", "6h", "1d"
+        maxDuration: "10m"   # Default unit is seconds. Could also be a Duration, e.g.: "2m", "6h", "1d"
     container:
       image: python:alpine3.6
       command: ["python", -c]
