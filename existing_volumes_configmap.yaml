@@ -1,0 +1,38 @@
+# This example demonstrates the ability for a workflow to attach 
+# to a pre-created, existing volume for use throughout a workflow.
+# A PVC named 'my-existing-volume' is assumed to exist. Create it
+# using `kubectl create -f examples/testvolume.yaml`.
+# 
+# The first step will append the current timestamp to an access log. 
+# The second step will dump the contents of the access log. Submit
+# this workflow multiple times to see the access log grow after each
+# submission.
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: volumes-existing-configmap
+spec:
+  entrypoint: volumes-existing-example
+  volumes:
+  - name: workdir
+    persistentVolumeClaim:
+      claimName: argo-pv-claim
+  - name: config-volume
+    configMap:
+      # Provide the name of the ConfigMap containing the files you want
+      # to add to the container
+      name: game-config
+
+  templates:
+  - name: volumes-existing-example
+    steps:
+    - - name: printconfigmap
+        template: print-configmap
+  - name: print-configmap
+    container:
+      image: alpine:latest
+      command: [sh, -c]
+      args: ["echo 'configmap: '; ls /etc/config/"]
+      volumeMounts:
+      - name: config-volume
+        mountPath: /etc/config
